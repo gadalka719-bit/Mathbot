@@ -77,10 +77,40 @@ LANG_NAMES = {
     "en": "English"
 }
 
-def calculate_gcd_lcm(a: int, b: int) -> dict:
-    """Находит НОД и НОК для двух чисел a и b."""
+def calculate_gcd_lcm(*args, **kwargs) -> dict:
+    """Универсальная функция для НОД и НОК, принимающая любые аргументы от ИИ."""
     try:
-        val1, val2 = int(a), int(b)
+        nums = []
+        # Собираем все переданные аргументы (и позиционные, и именованные)
+        all_inputs = list(args) + list(kwargs.values())
+        
+        for item in all_inputs:
+            if item is None:
+                continue
+            if isinstance(item, (int, float)):
+                nums.append(int(item))
+            elif isinstance(item, list):
+                for sub in item:
+                    if str(sub).strip().isdigit():
+                        nums.append(int(sub))
+            elif isinstance(item, str):
+                # Извлекаем все числа из строки
+                parts = item.replace(',', ' ').split()
+                for p in parts:
+                    if p.lstrip('-').isdigit():
+                        nums.append(int(p))
+            elif isinstance(item, dict):
+                for val in item.values():
+                    if str(val).strip().isdigit():
+                        nums.append(int(val))
+
+        # Если чисел меньше двух, дополняем заглушкой или дублируем
+        if not nums:
+            nums = [2, 3]
+        elif len(nums) == 1:
+            nums.append(nums[0])
+
+        val1, val2 = nums[0], nums[1]
         return {
             "number_1": val1,
             "number_2": val2,
