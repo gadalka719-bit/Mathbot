@@ -77,10 +77,26 @@ LANG_NAMES = {
     "en": "English"
 }
 
-def calculate_gcd_lcm(numbers: list[int]) -> dict:
-    if not numbers:
-        return {"error": "Список чисел пуст"}
-    return {"numbers": numbers, "GCD_НОД_НСД": math.gcd(*numbers), "LCM_НОК_НСК": math.lcm(*numbers)}
+def calculate_gcd_lcm(numbers) -> dict:
+    try:
+        if isinstance(numbers, (int, float)):
+            nums = [int(numbers)]
+        elif isinstance(numbers, list):
+            nums = [int(n) for n in numbers]
+        elif isinstance(numbers, str):
+            nums = [int(n) for n in numbers.replace(',', ' ').split() if n.isdigit()]
+        else:
+            nums = [int(n) for n in numbers]
+            
+        if not nums:
+            return {"error": "Список чисел пуст"}
+        return {
+            "numbers": nums, 
+            "GCD_НОД_НСД": math.gcd(*nums), 
+            "LCM_НОК_НСК": math.lcm(*nums)
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 def calculate_root(number: float, degree: int = 2) -> dict:
     if number < 0 and degree % 2 == 0:
