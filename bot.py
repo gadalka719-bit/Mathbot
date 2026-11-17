@@ -3,14 +3,11 @@ import logging
 import os
 import http.server
 import threading
-from fractions import Fraction
-import sympy as sp
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from google import genai
-from google.genai import types as genai_types
 
 # Ключі
 TELEGRAM_TOKEN = "9157017403:AAFZrDew8URDf8__d6fNrmY70yU89wauZGo"
@@ -76,43 +73,6 @@ LANG_NAMES = {
     "en": "English"
 }
 
-def calculate_root(number: float, degree: int = 2) -> dict:
-    if number < 0 and degree % 2 == 0:
-        return {"error": "Нельзя извлечь четный корень из отрицательного числа"}
-    return {
-        "number": number, "degree": degree,
-        "simplified_exact": str(sp.root(sp.nsimplify(number), degree)),
-        "approximate_decimal": float(sp.N(sp.root(number, degree), 6))
-    }
-
-def calculate_fractions(frac1: str, frac2: str, operation: str) -> dict:
-    f1, f2 = Fraction(frac1), Fraction(frac2)
-    if operation == "add": res = f1 + f2
-    elif operation == "sub": res = f1 - f2
-    elif operation == "mul": res = f1 * f2
-    elif operation == "div":
-        if f2 == 0: return {"error": "Деление на ноль"}
-        res = f1 / f2
-    else: return {"error": "Неизвестная операция"}
-    
-    whole = res.numerator // res.denominator if res.numerator >= 0 else -(-res.numerator // res.denominator)
-    rem = abs(res.numerator) % res.denominator
-    mixed = f"{whole} {rem}/{res.denominator}" if whole != 0 and rem != 0 else str(res)
-    
-    return {
-        "fraction_1": str(f1), "fraction_2": str(f2), "operation": operation,
-        "improper_fraction": str(res), "mixed_number": mixed, "decimal": round(float(res), 6)
-    }
-
-def evaluate_expression(expression: str) -> dict:
-    try:
-        expr = sp.sympify(expression)
-        return {"simplified": str(sp.simplify(expr)), "numeric_value": str(sp.N(expr, 6))}
-    except Exception as e:
-        return {"error": str(e)}
-
-math_tools = [calculate_root, calculate_fractions, evaluate_expression]
-
 def get_lang_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -145,28 +105,23 @@ async def handle_math_query(message: types.Message):
     target_language_name = LANG_NAMES[lang]
 
     wait_msg = await message.answer(TEXTS[lang]["thinking"])
-    system_instruction = (
+    
+    prompt = (
         f"You are an expert, friendly math tutor Telegram bot. "
-        f"CRITICAL RULE: You MUST respond strictly in {target_language_name}. "
-        f"You calculate LCM (НОК) and GCD (НОД) of numbers accurately and explain step-by-step. "
-        f"For roots, fractions, and complex expressions, use the provided Python tools. "
-        f"Do NOT use raw LaTeX dollar signs ($)."
+        f"You must respond strictly in {target_language_name}. "
+        f"User query: {message.text}. "
+        f"Calculate accurately, find LCM/GCD if requested, and explain step-by-step. Do not use raw LaTeX."
     )
 
     try:
-        response = await asyncio.to_thread(
-            ai_client.models.generate_content,
+        response = ai_client.models.generate_content(
             model=MODEL_ID,
-            contents=message.text,
-            config=genai_types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                tools=math_tools,
-                temperature=0.2,
-            )
+            contents=prompt,
         )
-        await wait_msg.edit_text(response.text or TEXTS[lang]["error"], parse_mode="Markdown")
+        answer_text = response.text if response and response.text else TEXTS[lang]["error"]
+        await wait_msg.edit_text(answer_text, parse_mode="Markdown")
     except Exception as e:
-        logging.error(f"AI Error: {e}")
+        logging.error(f"AI Error details: {e}")
         try:
             await wait_msg.edit_text(TEXTS[lang]["error"])
         except Exception:
