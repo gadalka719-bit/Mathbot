@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import math
 import os
 import http.server
 import threading
@@ -77,49 +76,6 @@ LANG_NAMES = {
     "en": "English"
 }
 
-def calculate_gcd_lcm(*args, **kwargs) -> dict:
-    """Универсальная функция для НОД и НОК, принимающая любые аргументы от ИИ."""
-    try:
-        nums = []
-        # Собираем все переданные аргументы (и позиционные, и именованные)
-        all_inputs = list(args) + list(kwargs.values())
-        
-        for item in all_inputs:
-            if item is None:
-                continue
-            if isinstance(item, (int, float)):
-                nums.append(int(item))
-            elif isinstance(item, list):
-                for sub in item:
-                    if str(sub).strip().isdigit():
-                        nums.append(int(sub))
-            elif isinstance(item, str):
-                # Извлекаем все числа из строки
-                parts = item.replace(',', ' ').split()
-                for p in parts:
-                    if p.lstrip('-').isdigit():
-                        nums.append(int(p))
-            elif isinstance(item, dict):
-                for val in item.values():
-                    if str(val).strip().isdigit():
-                        nums.append(int(val))
-
-        # Если чисел меньше двух, дополняем заглушкой или дублируем
-        if not nums:
-            nums = [2, 3]
-        elif len(nums) == 1:
-            nums.append(nums[0])
-
-        val1, val2 = nums[0], nums[1]
-        return {
-            "number_1": val1,
-            "number_2": val2,
-            "GCD_НОД_НСД": math.gcd(val1, val2),
-            "LCM_НОК_НСК": math.lcm(val1, val2)
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
 def calculate_root(number: float, degree: int = 2) -> dict:
     if number < 0 and degree % 2 == 0:
         return {"error": "Нельзя извлечь четный корень из отрицательного числа"}
@@ -155,7 +111,7 @@ def evaluate_expression(expression: str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-math_tools = [calculate_gcd_lcm, calculate_root, calculate_fractions, evaluate_expression]
+math_tools = [calculate_root, calculate_fractions, evaluate_expression]
 
 def get_lang_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -192,7 +148,8 @@ async def handle_math_query(message: types.Message):
     system_instruction = (
         f"You are an expert, friendly math tutor Telegram bot. "
         f"CRITICAL RULE: You MUST respond strictly in {target_language_name}. "
-        f"Always use the provided Python math tools to compute exact answers, then explain step-by-step. "
+        f"You calculate LCM (НОК) and GCD (НОД) of numbers accurately and explain step-by-step. "
+        f"For roots, fractions, and complex expressions, use the provided Python tools. "
         f"Do NOT use raw LaTeX dollar signs ($)."
     )
 
