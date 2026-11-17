@@ -77,23 +77,15 @@ LANG_NAMES = {
     "en": "English"
 }
 
-def calculate_gcd_lcm(numbers) -> dict:
+def calculate_gcd_lcm(a: int, b: int) -> dict:
+    """Находит НОД и НОК для двух чисел a и b."""
     try:
-        if isinstance(numbers, (int, float)):
-            nums = [int(numbers)]
-        elif isinstance(numbers, list):
-            nums = [int(n) for n in numbers]
-        elif isinstance(numbers, str):
-            nums = [int(n) for n in numbers.replace(',', ' ').split() if n.isdigit()]
-        else:
-            nums = [int(n) for n in numbers]
-            
-        if not nums:
-            return {"error": "Список чисел пуст"}
+        val1, val2 = int(a), int(b)
         return {
-            "numbers": nums, 
-            "GCD_НОД_НСД": math.gcd(*nums), 
-            "LCM_НОК_НСК": math.lcm(*nums)
+            "number_1": val1,
+            "number_2": val2,
+            "GCD_НОД_НСД": math.gcd(val1, val2),
+            "LCM_НОК_НСК": math.lcm(val1, val2)
         }
     except Exception as e:
         return {"error": str(e)}
